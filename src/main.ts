@@ -14,6 +14,7 @@ const config = new DocumentBuilder()
   .setTitle('Task Management API')
   .setDescription('API for managing projects and tasks')
   .setVersion('1.0')
+  .addBearerAuth() // Add this line to enable Bearer authentication
   .build();
 
 const document = SwaggerModule.createDocument(app, config);
