@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TaskEntity } from './entities/task.entity/task.entity.js';
 import { CreateTaskDto } from './dto/create-task.dto/create-task.dto.js';
 import { UpdateTaskDto } from './dto/update-task.dto/update-task.dto/update-task.dto.js';
+import { ProjectEntity } from '../projects/entities/project.entity/project.entity.js';
 
 @Injectable()
 export class TasksService {
@@ -12,7 +13,20 @@ export class TasksService {
     private readonly taskRepository: Repository<TaskEntity>,
   ) {}
 
-  async create(projectId: number, dto: CreateTaskDto) {
+  async create(projectId: number, dto: CreateTaskDto, userId: number) {
+    
+    const project = await this.taskRepository.manager.findOne(ProjectEntity, {
+      where: {
+        id: projectId,
+        user: {
+          id: userId,
+        },
+      },
+    });
+    if (!project) {
+      throw new NotFoundException('Project not found or you do not have access to this project');
+    }
+
     const task = this.taskRepository.create({
 
         title: dto.title,
@@ -20,7 +34,7 @@ export class TasksService {
         status: dto.status,
         dueDate: new Date(dto.dueDate),
       project: {
-        id: projectId,
+        id: project.id,
       },
     });
 
@@ -33,11 +47,12 @@ export class TasksService {
   projectId: number,
   taskId: number,
   dto: UpdateTaskDto,
+  userId: number,
 ) {
-  const task = await this.findOne(projectId, taskId);
+  const task = await this.findOne(projectId, taskId, userId);
 
   if (!task) {
-    throw new Error('Task not found');
+    throw new NotFoundException('Task not found');
   }
 
   if (dto.title !== undefined) {
@@ -59,10 +74,10 @@ export class TasksService {
   return this.taskRepository.save(task);
 }
 
-async remove(projectId: number, taskId: number) {
-  const task = await this.findOne(projectId, taskId);
+async remove(projectId: number, taskId: number, userId: number) {
+  const task = await this.findOne(projectId, taskId, userId);
 if (!task) {
-    throw new Error('Task not found');
+    throw new NotFoundException('Task not found');
   }
   await this.taskRepository.remove(task);
 
@@ -71,29 +86,59 @@ if (!task) {
   };
 }
   
-  async findAll(projectId: number) {
-    return this.taskRepository.find({
-      where: {
-        project: {
-          id: projectId,
-        },
-      },
-    });
-  }
-  async findOne(projectId: number, taskId: number) {
-  return this.taskRepository.findOne({
+  async findAll(projectId: number, userId: number, page: number = 1, limit: number = 10) {
+  const project = await this.taskRepository.manager.findOne(ProjectEntity, {
     where: {
-      id: taskId,
-      project: {
-        id: projectId,
+      id: projectId,
+      user: {
+        id: userId,
       },
     },
   });
 
-//  if (!task) {
-//       throw new Error('Task not found');
-//     }
-//     return task;
-//   }
+  if (!project) {
+    throw new NotFoundException(
+      'Project not found or you do not have access to this project',
+    );
+
+  }
+ const skip = (page - 1) * limit;
+
+const tasks = await this.taskRepository.find({
+  where: {
+    project: {
+      id: projectId,
+    },
+  },
+
+  skip,
+  take: limit,
+});
+
+return tasks;
+  }
+  
+  async findOne(
+  projectId: number,
+  taskId: number,
+  userId: number,
+) {
+  const task = await this.taskRepository.findOne({
+    where: {
+      id: taskId,
+      project: {
+        id: projectId,
+        user: {
+          id: userId,
+        },
+      },
+    },
+  });
+
+  if (!task) {
+    throw new NotFoundException('Task not found');
+  }
+
+  return task;
 }
 }
