@@ -86,7 +86,10 @@ if (!task) {
   };
 }
   
-  async findAll(projectId: number, userId: number, page: number = 1, limit: number = 10) {
+  async findAll(projectId: number, userId: number, page: number = 1, limit: number = 10,
+    status?: string,)
+     
+     {
   const project = await this.taskRepository.manager.findOne(ProjectEntity, {
     where: {
       id: projectId,
@@ -109,6 +112,7 @@ const tasks = await this.taskRepository.find({
     project: {
       id: projectId,
     },
+    ...status ? {status}:{},
   },
 
   skip,
@@ -117,7 +121,7 @@ const tasks = await this.taskRepository.find({
 
 return tasks;
   }
-  
+
   async findOne(
   projectId: number,
   taskId: number,

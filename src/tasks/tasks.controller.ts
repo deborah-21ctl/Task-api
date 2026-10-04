@@ -37,12 +37,15 @@ findAll(
   @Req() request: AuthRequest,
   @Query('page') page: number = 1,
   @Query('limit') limit: number = 10,
+  @Query('status') status?: string,
 ) {
   return this.tasksService.findAll(
   Number(projectId),
   request.user.sub,
   Number(page),
   Number(limit),
+  status,
+
 );
 }
     @Get(':taskId')
