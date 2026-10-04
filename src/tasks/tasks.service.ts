@@ -87,7 +87,9 @@ if (!task) {
 }
   
   async findAll(projectId: number, userId: number, page: number = 1, limit: number = 10,
-    status?: string,)
+    status?: string, sort?: string,
+
+)
      
      {
   const project = await this.taskRepository.manager.findOne(ProjectEntity, {
@@ -117,6 +119,8 @@ const tasks = await this.taskRepository.find({
 
   skip,
   take: limit,
+
+  order :sort ==='duedate' ? {dueDate : 'ASC'}: undefined
 });
 
 return tasks;

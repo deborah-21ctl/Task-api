@@ -38,6 +38,7 @@ findAll(
   @Query('page') page: number = 1,
   @Query('limit') limit: number = 10,
   @Query('status') status?: string,
+ @Query('sort') sort?: string,
 ) {
   return this.tasksService.findAll(
   Number(projectId),
@@ -45,6 +46,7 @@ findAll(
   Number(page),
   Number(limit),
   status,
+  sort,
 
 );
 }
