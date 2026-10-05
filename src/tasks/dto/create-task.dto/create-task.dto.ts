@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsDateString,
 } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum TaskStatus {
   TODO = 'TODO',
@@ -13,17 +14,37 @@ export enum TaskStatus {
 }
 
 export class CreateTaskDto {
-  @IsNotEmpty()
-  @IsString()
-  title: string;
+ @ApiProperty({
+  example: 'Fix server issue',
+  description: 'The title of the task',
+})
+@IsNotEmpty()
+@IsString()
+title: string;
 
-  @IsOptional()
-  @IsString()
-  description: string;
 
-  @IsEnum(TaskStatus)
-  status: TaskStatus;
+  @ApiPropertyOptional({
+  example: 'Investigate the server outage',
+  description: 'A detailed description of the task',
+})
+@IsOptional()
+@IsString()
+description: string;
 
-  @IsDateString()
-  dueDate: string;
+
+
+ @ApiProperty({
+  enum: TaskStatus,
+  example: TaskStatus.TODO,
+  description: 'The current status of the task',
+})
+@IsEnum(TaskStatus)
+status: TaskStatus;
+
+ @ApiProperty({
+  example: '2026-10-10',
+  description: 'The date the task is due',
+})
+@IsDateString()
+dueDate: string;
 }

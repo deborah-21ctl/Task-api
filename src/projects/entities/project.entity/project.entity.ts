@@ -1,20 +1,17 @@
-import { Entity, PrimaryGeneratedColumn, Column , ManyToOne} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { UserEntity } from '../../../auth/entities/user.entity/user.entity.js';
 
 @Entity()
 export class ProjectEntity {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column()
-    name: string;
+  @Column({ type: 'varchar' })
+  name: string;
 
-    @Column()
-    description: string;
+ @Column({ type: 'varchar' })
+description: string;
 
-    @ManyToOne(() => UserEntity)
-    user: UserEntity;
-
-
-
+  @ManyToOne(() => UserEntity)
+  user: UserEntity;
 }

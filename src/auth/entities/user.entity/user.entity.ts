@@ -1,13 +1,17 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
 
 @Entity()
 export class UserEntity {
+  @ApiProperty({ example: 1 })
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
-  email: string;
+  @ApiProperty({ example: 'ebun@example.com' })
+ @Column({ type: 'varchar', unique: true })
+email: string;
 
-  @Column()
-  password: string;
+  @ApiHideProperty()
+ @Column({ type: 'varchar' })
+password: string;
 }

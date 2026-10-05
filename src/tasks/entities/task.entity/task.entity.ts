@@ -12,16 +12,16 @@ export class TaskEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ type: 'varchar' })
   title: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   description: string;
 
-  @Column()
+  @Column({ type: 'varchar' })
   status: string;
 
-  @Column()
+  @Column({ type: 'timestamp' })
   dueDate: Date;
 
   @ManyToOne(() => ProjectEntity)
