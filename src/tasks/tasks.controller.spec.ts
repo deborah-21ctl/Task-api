@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TasksController } from './tasks.controller.js';
+import { TasksService } from './tasks.service.js';
+import { JwtService } from '@nestjs/jwt';
 
 describe('TasksController', () => {
   let controller: TasksController;
@@ -7,6 +9,18 @@ describe('TasksController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TasksController],
+
+      providers: [
+        {
+          provide: TasksService,
+          useValue: {},
+        },
+
+        {
+          provide: JwtService,
+          useValue: {},
+        },
+      ],
     }).compile();
 
     controller = module.get<TasksController>(TasksController);
