@@ -2,6 +2,8 @@ import { Controller, Post, Body, Req, UseGuards, Get } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto/register.dto.js';
 import { LoginDto } from './dto/login.dto/login.dto.js';
+import { ResetPasswordDto } from './dto/reset-password.dto/reset-password.dto.js';
+import { ForgotPasswordDto } from './dto/forgot-password.dto/forgot-password.dto.js';
 import type { AuthRequest } from './types/auth-request/auth-request.interface.js';
 import { JwtGuard } from './guards/jwt/jwt.guard.js';
 import {
@@ -14,11 +16,16 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+// import { EmailService } from './email/email.service.js';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+
+    // private readonly emailService: EmailService,
+  ) {}
 
   @ApiOperation({
     summary: 'Register an account',
@@ -82,4 +89,32 @@ export class AuthController {
   me(@Req() request: AuthRequest) {
     return request.user;
   }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+
+
+  @Post('reset-password')
+async resetPassword(@Body() dto: ResetPasswordDto) {
+  return this.authService.resetPassword(
+    dto.email,
+    dto.otp,
+    dto.newPassword,
+  );
+}
+  // @Get ('test-email')
+  // async testEmail(){
+  //   await this.emailService.sentOtpEmail(
+  //     process.env.SMTP_USER!,
+  //     '123456'
+
+  //   );
+
+  //   return{
+  //     message: 'Test email was sent successfully'
+  //   }
+  // }
 }

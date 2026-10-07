@@ -8,10 +8,18 @@ export class UserEntity {
   id: number;
 
   @ApiProperty({ example: 'ebun@example.com' })
- @Column({ type: 'varchar', unique: true })
-email: string;
+  @Column({ type: 'varchar', unique: true })
+  email: string;
 
   @ApiHideProperty()
- @Column({ type: 'varchar' })
-password: string;
+  @Column({ type: 'varchar' })
+  password: string;
+
+  @ApiHideProperty()
+  @Column({ type: 'varchar', nullable: true })
+  resetPasswordOtp: string | null;
+
+  @ApiHideProperty()
+  @Column({ type: 'varchar', nullable: true })
+  resetPasswordOtpExpiresAt: Date | null;
 }
