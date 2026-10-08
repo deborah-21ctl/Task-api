@@ -1,4 +1,5 @@
 import { JwtGuard } from '../auth/guards/jwt/jwt.guard.js';
+
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -11,6 +12,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+
 import type { AuthRequest } from '../auth/types/auth-request/auth-request.interface.js';
 
 import {
@@ -25,6 +27,7 @@ import {
   Req,
   Query,
 } from '@nestjs/common';
+
 import { CreateTaskDto } from './dto/create-task.dto/create-task.dto.js';
 import { TasksService } from './tasks.service.js';
 import { UpdateTaskDto } from './dto/update-task.dto/update-task.dto/update-task.dto.js';
@@ -47,8 +50,12 @@ export class TasksController {
     description: 'ID of the project that will contain the task',
     example: 1,
   })
-  @ApiCreatedResponse({ description: 'The task was created successfully.' })
-  @ApiBadRequestResponse({ description: 'The request body failed validation.' })
+  @ApiCreatedResponse({
+    description: 'The task was created successfully.',
+  })
+  @ApiBadRequestResponse({
+    description: 'The request body failed validation.',
+  })
   @ApiUnauthorizedResponse({
     description: 'A valid bearer access token is required.',
   })
@@ -106,9 +113,12 @@ export class TasksController {
     description: 'Use "duedate" to sort by due date, earliest first.',
   })
   @ApiOkResponse({
-    description: 'An array of tasks matching the requested page and filters.',
+    description:
+      'A paginated list of tasks with page, limit, total, and totalPages information.',
   })
-  @ApiBadRequestResponse({ description: 'The query parameters are invalid.' })
+  @ApiBadRequestResponse({
+    description: 'The query parameters are invalid.',
+  })
   @ApiUnauthorizedResponse({
     description: 'A valid bearer access token is required.',
   })
@@ -150,7 +160,9 @@ export class TasksController {
     description: 'ID of the task to retrieve',
     example: 1,
   })
-  @ApiOkResponse({ description: 'The task was found.' })
+  @ApiOkResponse({
+    description: 'The task was found.',
+  })
   @ApiUnauthorizedResponse({
     description: 'A valid bearer access token is required.',
   })
@@ -187,8 +199,12 @@ export class TasksController {
     description: 'ID of the task to update',
     example: 1,
   })
-  @ApiOkResponse({ description: 'The updated task.' })
-  @ApiBadRequestResponse({ description: 'The request body failed validation.' })
+  @ApiOkResponse({
+    description: 'The updated task.',
+  })
+  @ApiBadRequestResponse({
+    description: 'The request body failed validation.',
+  })
   @ApiUnauthorizedResponse({
     description: 'A valid bearer access token is required.',
   })
@@ -226,7 +242,9 @@ export class TasksController {
     description: 'ID of the task to delete',
     example: 1,
   })
-  @ApiOkResponse({ description: 'The task was deleted successfully.' })
+  @ApiOkResponse({
+    description: 'The task was deleted successfully.',
+  })
   @ApiUnauthorizedResponse({
     description: 'A valid bearer access token is required.',
   })

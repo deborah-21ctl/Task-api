@@ -109,7 +109,7 @@ if (!task) {
   }
  const skip = (page - 1) * limit;
 
-const tasks = await this.taskRepository.find({
+const [tasks, total] = await this.taskRepository.findAndCount({
   where: {
     project: {
       id: projectId,
@@ -122,8 +122,14 @@ const tasks = await this.taskRepository.find({
 
   order :sort ==='duedate' ? {dueDate : 'ASC'}: undefined
 });
-
-return tasks;
+const totalPages = Math.ceil(total / limit);
+return {
+  data: tasks,
+  page,
+  limit,
+  total,
+  totalPages,
+};
   }
 
   async findOne(

@@ -5,6 +5,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { UserEntity } from './entities/user.entity/user.entity.js';
 import { vi } from 'vitest';
 import * as bcrypt from 'bcrypt';
+import { EmailService } from './email/email.service.js';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -23,12 +24,17 @@ describe('AuthService', () => {
             save: vi.fn(),
           },
         },
-
         {
           provide: JwtService,
           useValue: {
-  sign: vi.fn(),
-},
+            sign: vi.fn(),
+          },
+        },
+        {
+          provide: EmailService,
+          useValue: {
+            sentOtpEmail: vi.fn(),
+          },
         },
       ],
     }).compile();

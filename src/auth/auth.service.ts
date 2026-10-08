@@ -12,6 +12,7 @@ import { RegisterDto } from './dto/register.dto/register.dto.js';
 import { LoginDto } from './dto/login.dto/login.dto.js';
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from './email/email.service.js';
+import { Role } from './enums/role.enum.js';
 // import { randomInt } from 'node:crypto';
 
 @Injectable()
@@ -37,6 +38,7 @@ export class AuthService {
     const user = this.userRepository.create({
       email: dto.email,
       password: hashedPassword,
+     role: Role.USER
     });
 
     const savedUser = await this.userRepository.save(user);
@@ -64,6 +66,7 @@ export class AuthService {
     const token = this.jwtService.sign({
       sub: user.id,
       email: user.email,
+      role : user.role,
     });
 
     return {

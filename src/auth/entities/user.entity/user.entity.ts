@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
+import { Role } from '../../enums/role.enum.js';
 
 @Entity()
 export class UserEntity {
@@ -14,6 +15,10 @@ export class UserEntity {
   @ApiHideProperty()
   @Column({ type: 'varchar' })
   password: string;
+
+  @ApiProperty({ example: 'USER' })
+  @Column({ type: 'varchar', default: 'USER' })
+  role: Role;
 
   @ApiHideProperty()
   @Column({ type: 'varchar', nullable: true })

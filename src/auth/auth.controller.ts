@@ -6,6 +6,10 @@ import { ResetPasswordDto } from './dto/reset-password.dto/reset-password.dto.js
 import { ForgotPasswordDto } from './dto/forgot-password.dto/forgot-password.dto.js';
 import type { AuthRequest } from './types/auth-request/auth-request.interface.js';
 import { JwtGuard } from './guards/jwt/jwt.guard.js';
+import { Roles } from './decorators/roles/roles.decorator.js';
+import { RolesGuard } from './guards/roles/roles.guard.js';
+import { Role } from './enums/role.enum.js';
+
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -95,16 +99,21 @@ export class AuthController {
     return this.authService.forgotPassword(dto.email);
   }
 
-
-
   @Post('reset-password')
-async resetPassword(@Body() dto: ResetPasswordDto) {
-  return this.authService.resetPassword(
-    dto.email,
-    dto.otp,
-    dto.newPassword,
-  );
-}
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.email, dto.otp, dto.newPassword);
+  }
+
+  @ApiBearerAuth()
+  @Get('post-admin')
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  adminTest() {
+    return {
+      message: 'you are admin',
+    };
+  }
+
   // @Get ('test-email')
   // async testEmail(){
   //   await this.emailService.sentOtpEmail(
