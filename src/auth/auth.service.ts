@@ -13,7 +13,6 @@ import { LoginDto } from './dto/login.dto/login.dto.js';
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from './email/email.service.js';
 import { Role } from './enums/role.enum.js';
-// import { randomInt } from 'node:crypto';
 
 @Injectable()
 export class AuthService {
@@ -35,13 +34,15 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
+
     const user = this.userRepository.create({
       email: dto.email,
       password: hashedPassword,
-     role: Role.USER
+      role: Role.USER,
     });
 
     const savedUser = await this.userRepository.save(user);
+
     return {
       id: savedUser.id,
       email: savedUser.email,
@@ -66,17 +67,19 @@ export class AuthService {
     const token = this.jwtService.sign({
       sub: user.id,
       email: user.email,
-      role : user.role,
+      role: user.role,
     });
 
     return {
       access_token: token,
     };
   }
+
   async forgotPassword(email: string) {
     const user = await this.userRepository.findOne({
       where: { email },
     });
+
     if (!user) {
       return {
         message: 'if the email exists, a password OTP has been sent',
@@ -84,15 +87,17 @@ export class AuthService {
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
     user.resetPasswordOtp = await bcrypt.hash(otp, 10);
 
     user.resetPasswordOtpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await this.userRepository.save(user);
+
     await this.emailservice.sentOtpEmail(user.email, otp);
 
     return {
-      message: ' if this email exits, this a reset OTP has been sent',
+      message: 'if this email exists, a reset OTP has been sent',
     };
   }
 
@@ -100,9 +105,11 @@ export class AuthService {
     const user = await this.userRepository.findOne({
       where: { email },
     });
+
     if (!user) {
       throw new BadRequestException('Invalid or expired OTP');
     }
+
     if (
       !user.resetPasswordOtp ||
       !user.resetPasswordOtpExpiresAt ||
@@ -110,15 +117,22 @@ export class AuthService {
     ) {
       throw new BadRequestException('Invalid or expired OTP');
     }
+
+    const otpMatches = await bcrypt.compare(otp, user.resetPasswordOtp);
+
+    if (!otpMatches) {
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+
     user.password = await bcrypt.hash(newPassword, 10);
 
-    user.resetPasswordOtp = null
-    user.resetPasswordOtpExpiresAt = null
+    user.resetPasswordOtp = null;
+    user.resetPasswordOtpExpiresAt = null;
 
-    await this.userRepository.save(user)
+    await this.userRepository.save(user);
 
     return {
-      message : 'password reset successfully'
-    }
+      message: 'password reset successfully',
+    };
   }
 }

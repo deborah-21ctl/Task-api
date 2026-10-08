@@ -31,8 +31,9 @@ import {
 import { CreateTaskDto } from './dto/create-task.dto/create-task.dto.js';
 import { TasksService } from './tasks.service.js';
 import { UpdateTaskDto } from './dto/update-task.dto/update-task.dto/update-task.dto.js';
+import { TaskEntity } from './entities/task.entity/task.entity.js';
 
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @ApiTags('Tasks')
 @Controller('projects/:projectId/tasks')
 @UseGuards(JwtGuard)
@@ -52,6 +53,7 @@ export class TasksController {
   })
   @ApiCreatedResponse({
     description: 'The task was created successfully.',
+    type: TaskEntity,
   })
   @ApiBadRequestResponse({
     description: 'The request body failed validation.',
@@ -115,6 +117,16 @@ export class TasksController {
   @ApiOkResponse({
     description:
       'A paginated list of tasks with page, limit, total, and totalPages information.',
+    schema: {
+      type: 'object',
+      properties: {
+        data: { type: 'array', items: { $ref: '#/components/schemas/TaskEntity' } },
+        page: { type: 'number', example: 1 },
+        limit: { type: 'number', example: 10 },
+        total: { type: 'number', example: 23 },
+        totalPages: { type: 'number', example: 3 },
+      },
+    },
   })
   @ApiBadRequestResponse({
     description: 'The query parameters are invalid.',
@@ -162,6 +174,7 @@ export class TasksController {
   })
   @ApiOkResponse({
     description: 'The task was found.',
+    type: TaskEntity,
   })
   @ApiUnauthorizedResponse({
     description: 'A valid bearer access token is required.',
@@ -199,9 +212,7 @@ export class TasksController {
     description: 'ID of the task to update',
     example: 1,
   })
-  @ApiOkResponse({
-    description: 'The updated task.',
-  })
+  @ApiOkResponse({ description: 'The updated task.', type: TaskEntity })
   @ApiBadRequestResponse({
     description: 'The request body failed validation.',
   })
@@ -244,6 +255,12 @@ export class TasksController {
   })
   @ApiOkResponse({
     description: 'The task was deleted successfully.',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Task deleted successfully' },
+      },
+    },
   })
   @ApiUnauthorizedResponse({
     description: 'A valid bearer access token is required.',

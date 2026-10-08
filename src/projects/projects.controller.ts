@@ -18,7 +18,6 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
-  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -26,8 +25,9 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { ProjectEntity } from './entities/project.entity/project.entity.js';
 
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @ApiTags('Projects')
 @Controller('projects')
 @UseGuards(JwtGuard)
@@ -38,11 +38,17 @@ export class ProjectsController {
     summary: 'List your projects',
     description: 'Returns only projects owned by the authenticated user.',
   })
-  @ApiOkResponse({ description: 'The user’s projects.' })
+  @ApiOkResponse({
+    description: 'Projects owned by the authenticated user.',
+    type: ProjectEntity,
+    isArray: true,
+  })
   @ApiUnauthorizedResponse({
     description: 'The access token is invalid or expired.',
   })
-  @ApiForbiddenResponse({ description: 'A bearer access token is required.' })
+  @ApiUnauthorizedResponse({
+    description: 'A bearer access token is missing, invalid, or expired.',
+  })
   @Get()
   findAll(@Req() request: AuthRequest) {
     return this.projectsService.findAll(request.user.sub);
@@ -58,11 +64,16 @@ export class ProjectsController {
     example: 1,
     description: 'Project ID.',
   })
-  @ApiOkResponse({ description: 'The requested project.' })
+  @ApiOkResponse({
+    description: 'The requested project.',
+    type: ProjectEntity,
+  })
   @ApiUnauthorizedResponse({
     description: 'The access token is invalid or expired.',
   })
-  @ApiForbiddenResponse({ description: 'A bearer access token is required.' })
+  @ApiUnauthorizedResponse({
+    description: 'A bearer access token is missing, invalid, or expired.',
+  })
   @ApiNotFoundResponse({ description: 'The project was not found.' })
   @Get(':id')
   findOne(@Param('id') id: string, @Req() request: AuthRequest) {
@@ -73,12 +84,17 @@ export class ProjectsController {
     summary: 'Create a project',
     description: 'Creates a project owned by the authenticated user.',
   })
-  @ApiCreatedResponse({ description: 'The project was created successfully.' })
+  @ApiCreatedResponse({
+    description: 'The project was created successfully.',
+    type: ProjectEntity,
+  })
   @ApiBadRequestResponse({ description: 'The request body failed validation.' })
   @ApiUnauthorizedResponse({
     description: 'The access token is invalid or expired.',
   })
-  @ApiForbiddenResponse({ description: 'A bearer access token is required.' })
+  @ApiUnauthorizedResponse({
+    description: 'A bearer access token is missing, invalid, or expired.',
+  })
   @Post()
   create(@Body() dto: CreateProjectDto, @Req() request: AuthRequest) {
     return this.projectsService.create(dto, request.user.sub);
@@ -95,12 +111,14 @@ export class ProjectsController {
     example: 1,
     description: 'Project ID.',
   })
-  @ApiOkResponse({ description: 'The updated project.' })
+  @ApiOkResponse({ description: 'The updated project.', type: ProjectEntity })
   @ApiBadRequestResponse({ description: 'The request body failed validation.' })
   @ApiUnauthorizedResponse({
     description: 'The access token is invalid or expired.',
   })
-  @ApiForbiddenResponse({ description: 'A bearer access token is required.' })
+  @ApiUnauthorizedResponse({
+    description: 'A bearer access token is missing, invalid, or expired.',
+  })
   @ApiNotFoundResponse({ description: 'The project was not found.' })
   @Patch(':id')
   update(
@@ -122,11 +140,21 @@ export class ProjectsController {
     example: 1,
     description: 'Project ID.',
   })
-  @ApiOkResponse({ description: 'Confirmation that the project was deleted.' })
+  @ApiOkResponse({
+    description: 'Confirmation that the project was deleted.',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Project deleted successfully' },
+      },
+    },
+  })
   @ApiUnauthorizedResponse({
     description: 'The access token is invalid or expired.',
   })
-  @ApiForbiddenResponse({ description: 'A bearer access token is required.' })
+  @ApiUnauthorizedResponse({
+    description: 'A bearer access token is missing, invalid, or expired.',
+  })
   @ApiNotFoundResponse({ description: 'The project was not found.' })
   @Delete(':id')
   remove(@Param('id') id: string, @Req() request: AuthRequest) {

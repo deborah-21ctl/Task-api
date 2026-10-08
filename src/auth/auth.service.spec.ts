@@ -91,27 +91,36 @@ describe('AuthService', () => {
     ).rejects.toThrow('User with this email already exists');
   });
 
-it('should login a user with correct credentials', async () => { const repository = module.get( getRepositoryToken(UserEntity), ); const jwtService = module.get(JwtService); vi.mocked(repository.findOne).mockResolvedValue({ id: 1, email: 'test@example.com', password: await bcrypt.hash('password123', 10), } as UserEntity); vi.mocked(jwtService.sign).mockReturnValue('fake-token'); const result = await service.login({ email: 'test@example.com', password: 'password123', }); expect(result).toEqual({ access_token: 'fake-token', }); });
-
-
-it('should reject an incorrect password', async () => {
-  const repository = module.get(
-    getRepositoryToken(UserEntity),
-  );
-
-  vi.mocked(repository.findOne).mockResolvedValue({
-    id: 1,
-    email: 'test@example.com',
-    password: await bcrypt.hash('correct-password', 10),
-  } as UserEntity);
-
-  await expect(
-    service.login({
+  it('should login a user with correct credentials', async () => {
+    const repository = module.get(getRepositoryToken(UserEntity));
+    const jwtService = module.get(JwtService);
+    vi.mocked(repository.findOne).mockResolvedValue({
+      id: 1,
       email: 'test@example.com',
-      password: 'wrong-password',
-    }),
-  ).rejects.toThrow('Invalid email or password');
-});
+      password: await bcrypt.hash('password123', 10),
+    } as UserEntity);
+    vi.mocked(jwtService.sign).mockReturnValue('fake-token');
+    const result = await service.login({
+      email: 'test@example.com',
+      password: 'password123',
+    });
+    expect(result).toEqual({ access_token: 'fake-token' });
+  });
 
+  it('should reject an incorrect password', async () => {
+    const repository = module.get(getRepositoryToken(UserEntity));
 
+    vi.mocked(repository.findOne).mockResolvedValue({
+      id: 1,
+      email: 'test@example.com',
+      password: await bcrypt.hash('correct-password', 10),
+    } as UserEntity);
+
+    await expect(
+      service.login({
+        email: 'test@example.com',
+        password: 'wrong-password',
+      }),
+    ).rejects.toThrow('Invalid email or password');
+  });
 });
