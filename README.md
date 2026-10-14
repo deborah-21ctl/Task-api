@@ -43,9 +43,16 @@ DB_NAME=task_api
 
 JWT_SECRET=replace_with_a_long_random_secret
 JWT_EXPIRES_IN=1h
+
+SMTP_HOST=smtp.ethereal.email
+SMTP_PORT=587
+SMTP_USER=your_ethereal_username
+SMTP_PASSWORD=your_ethereal_password
 ```
 
 The values above match the repository's Docker Compose database defaults. If you change the database credentials in `docker-compose.yml`, update the corresponding `.env` values too. Keep `.env` private; do not commit secrets or real credentials.
+
+For password-reset emails, create a test account at [Ethereal Email](https://ethereal.email/) and use its SMTP username and password above. Ethereal captures messages in its web inbox instead of delivering them to real recipients.
 
 `JWT_EXPIRES_IN` is required by environment validation. The current JWT module sets token expiry to one hour.
 
@@ -80,9 +87,10 @@ http://localhost:3000/docs
 Swagger provides request and response documentation and lets you try the endpoints. To call protected endpoints:
 
 1. Register with `POST /auth/register`.
-2. Log in with `POST /auth/login`.
-3. Copy the `access_token` from the response.
-4. Select **Authorize** in Swagger and enter the token.
+2. Verify the email with `POST /auth/verify-email` using the code sent to the address.
+3. Log in with `POST /auth/login`.
+4. Copy the `access_token` from the response.
+5. Select **Authorize** in Swagger and enter the token.
 
 For requests outside Swagger, send the access token returned by login using the HTTP bearer authentication scheme in the `Authorization` header.
 
@@ -92,7 +100,8 @@ For requests outside Swagger, send the access token returned by login using the 
 
 | Method | Endpoint | Description | Authentication |
 | --- | --- | --- | --- |
-| `POST` | `/auth/register` | Create an account | No |
+| `POST` | `/auth/register` | Create an account and send an email verification code | No |
+| `POST` | `/auth/verify-email` | Verify an email address using the emailed code | No |
 | `POST` | `/auth/login` | Log in and receive a JWT | No |
 | `GET` | `/auth/me` | Get the current token's user claims | JWT required |
 
@@ -100,10 +109,56 @@ Register request:
 
 ```json
 {
+  "fullName": "Jordan Smith",
+  "phoneNumber": "+14155552671",
   "email": "user@example.com",
-  "password": "Password123!"
+  "password": "MySecurePass123!"
 }
 ```
+
+Use an international phone number with its country code (for example, `+14155552671`).
+Passwords must be 16–72 characters and include uppercase and lowercase letters, a number, and a special character, with no spaces. Common passwords are rejected.
+
+Invalid request fields return HTTP `400` with field-specific messages, for example:
+
+```json
+{
+  "statusCode": 400,
+  "success": false,
+  "message": "Validation failed",
+  "errors": {
+    "password": [
+      "Password must contain at least 16 characters."
+    ]
+  },
+  "path": "/auth/register"
+}
+```
+
+Login uses a generic `401 Invalid email or password` response for incorrect credentials. If the credentials are correct but the email has not been verified, login returns `403 Please verify your email before logging in`.
+
+Successful registration creates an unverified account, sends a verification code to the email address, and returns a message asking the user to enter that code:
+
+```json
+{
+  "id": 1,
+  "fullName": "Jordan Smith",
+  "phoneNumber": "+14155552671",
+  "email": "user@example.com",
+  "message": "A verification code has been sent to your email. Enter the OTP to verify your email and complete registration."
+}
+```
+
+Verify the email using the code sent during registration:
+
+```json
+{
+  "email": "user@example.com",
+  "otp": "123456"
+}
+```
+
+An account must be verified before it can log in.
 
 Login returns an access token:
 
@@ -190,11 +245,27 @@ The endpoint returns an array of matching tasks. Pagination metadata is not curr
 
 The global NestJS `ValidationPipe` validates DTOs, transforms incoming values, and removes properties that are not in the DTO. Invalid request data returns a `400` response.
 
+Successful responses include the actual HTTP status code and a message. The endpoint result is included in `data` when present:
+
+```json
+{
+  "statusCode": 201,
+  "success": true,
+  "message": "Request successful",
+  "data": {
+    "id": 1
+  }
+}
+```
+
+When an endpoint returns a message, that message is used in the response envelope.
+
 The HTTP exception filter returns errors in this shape:
 
 ```json
 {
   "statusCode": 404,
+  "success": false,
   "message": "Project not found",
   "path": "/projects/999"
 }

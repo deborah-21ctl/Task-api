@@ -8,6 +8,14 @@ export class UserEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @ApiProperty({ example: 'Jordan Smith' })
+  @Column({ type: 'varchar', nullable: true })
+  fullName: string | null;
+
+  @ApiProperty({ example: '+14155552671' })
+  @Column({ type: 'varchar', nullable: true })
+  phoneNumber: string | null;
+
   @ApiProperty({ example: 'ebun@example.com' })
   @Column({ type: 'varchar', unique: true })
   email: string;
@@ -27,4 +35,16 @@ export class UserEntity {
   @ApiHideProperty()
   @Column({ type: 'varchar', nullable: true })
   resetPasswordOtpExpiresAt: Date | null;
+
+  @ApiProperty({ example: false })
+  @Column({ type: 'boolean', default: false })
+  isEmailVerified: boolean;
+
+  @ApiHideProperty()
+  @Column({ type: 'varchar', nullable: true })
+  emailVerificationOtp: string | null;
+
+  @ApiHideProperty()
+  @Column({ type: 'timestamp', nullable: true })
+  emailVerificationOtpExpiresAt: Date | null;
 }

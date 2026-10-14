@@ -31,4 +31,13 @@ export class EmailService {
       
     });
   }
+  async sendVerificationEmail(email: string, otp: string) {
+    await this.transporter.sendMail({
+      from: process.env.SMTP_USER,
+      to: email,
+      subject: 'Verify your Task API email',
+      text: `Your email verification code is ${otp}. It expires in 30 minutes.`,
+    });
+  }
+
 }

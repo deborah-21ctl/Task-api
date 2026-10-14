@@ -8,7 +8,7 @@ export default new DataSource({
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
 
-  database: 'task_api_migration',
+  database: process.env.DB_NAME,
 
   entities: ['src/**/*.entity.ts'],
   migrations: ['src/migrations/*.ts'],

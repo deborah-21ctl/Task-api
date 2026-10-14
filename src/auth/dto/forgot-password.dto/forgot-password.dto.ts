@@ -6,6 +6,6 @@ export class ForgotPasswordDto {
     example: 'user@example.com',
     description: 'Email address associated with the account to recover.',
   })
-  @IsEmail()
+  @IsEmail({}, { message: 'Please provide a valid email address.' })
   email: string;
 }

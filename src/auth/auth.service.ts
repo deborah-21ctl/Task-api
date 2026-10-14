@@ -3,6 +3,7 @@ import {
   ConflictException,
   UnauthorizedException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,6 +14,8 @@ import { LoginDto } from './dto/login.dto/login.dto.js';
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from './email/email.service.js';
 import { Role } from './enums/role.enum.js';
+import { validatePasswordStrength } from './utils/password-validation.js';
+import { VerifyEmailDto } from './dto/verify-email.dto/verify-email.dto.js';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +28,8 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
+    validatePasswordStrength(dto.password);
+
     const existingUser = await this.userRepository.findOne({
       where: { email: dto.email },
     });
@@ -35,18 +40,67 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
     const user = this.userRepository.create({
+      fullName: dto.fullName,
+      phoneNumber: dto.phoneNumber,
       email: dto.email,
       password: hashedPassword,
       role: Role.USER,
+      isEmailVerified: false,
+      emailVerificationOtp: await bcrypt.hash(otp, 10),
+      emailVerificationOtpExpiresAt: new Date(Date.now() + 30 * 60 * 1000),
     });
 
     const savedUser = await this.userRepository.save(user);
 
+    await this.emailservice.sendVerificationEmail(savedUser.email, otp);
+
     return {
       id: savedUser.id,
+      fullName: savedUser.fullName,
+      phoneNumber: savedUser.phoneNumber,
       email: savedUser.email,
+      message:
+        'A verification code has been sent to your email. Enter the OTP to verify your email and complete registration.',
     };
+  }
+
+  async verifyEmail(dto: VerifyEmailDto) {
+    const user = await this.userRepository.findOne({
+      where: { email: dto.email },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired verification code');
+    }
+
+    if (user.isEmailVerified) {
+      return { message: 'Email is already verified' };
+    }
+
+    if (
+      !user.emailVerificationOtp ||
+      !user.emailVerificationOtpExpiresAt ||
+      user.emailVerificationOtpExpiresAt < new Date()
+    ) {
+      throw new BadRequestException('Invalid or expired verification code');
+    }
+
+    const otpMatches = await bcrypt.compare(dto.otp, user.emailVerificationOtp);
+
+    if (!otpMatches) {
+      throw new BadRequestException('Invalid or expired verification code');
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationOtp = null;
+    user.emailVerificationOtpExpiresAt = null;
+
+    await this.userRepository.save(user);
+
+    return { message: 'Email verified successfully' };
   }
 
   async login(dto: LoginDto) {
@@ -62,6 +116,10 @@ export class AuthService {
 
     if (!PasswordsMatches) {
       throw new UnauthorizedException('Invalid email or password');
+    }
+
+    if (!user.isEmailVerified) {
+      throw new ForbiddenException('Please verify your email before logging in');
     }
 
     const token = this.jwtService.sign({
@@ -102,6 +160,8 @@ export class AuthService {
   }
 
   async resetPassword(email: string, otp: string, newPassword: string) {
+    validatePasswordStrength(newPassword);
+
     const user = await this.userRepository.findOne({
       where: { email },
     });

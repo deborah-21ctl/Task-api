@@ -8,7 +8,7 @@ import { HttpExceptionFilter } from './../src/common/filters/http-exception/http
 describe('Task API (e2e)', () => {
   let app: INestApplication<App>;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -27,10 +27,14 @@ describe('Task API (e2e)', () => {
     await app.init();
   });
 
+  afterAll(async () => {
+    await app.close();
+  });
+
   // TEST 1: Register and Login
   it('should register a user and login successfully', async () => {
     const email = `e2e-${Date.now()}@example.com`;
-    const password = 'Password123';
+    const password = 'MySecurePass123!';
 
     await request(app.getHttpServer())
       .post('/auth/register')
@@ -59,7 +63,7 @@ describe('Task API (e2e)', () => {
   // TEST 3: Create and Fetch Task
   it('should create and fetch a task', async () => {
     const email = `e2e-${Date.now()}@example.com`;
-    const password = 'Password123';
+    const password = 'MySecurePass123!';
 
     // Register
     await request(app.getHttpServer())
@@ -121,7 +125,7 @@ describe('Task API (e2e)', () => {
   it("should prevent a user from accessing another user's project", async () => {
     const userAEmail = `owner-${Date.now()}@example.com`;
     const userBEmail = `other-${Date.now()}@example.com`;
-    const password = 'Password123';
+    const password = 'MySecurePass123!';
 
     // Register User A
     await request(app.getHttpServer())
@@ -155,6 +159,12 @@ describe('Task API (e2e)', () => {
 
     const projectId = projectResponse.body.id;
 
+    // User A can access their own project
+    await request(app.getHttpServer())
+      .get(`/projects/${projectId}`)
+      .set('Authorization', `Bearer ${userAToken}`)
+      .expect(200);
+
     // Register User B
     await request(app.getHttpServer())
       .post('/auth/register')
@@ -182,7 +192,14 @@ describe('Task API (e2e)', () => {
       .expect(404);
   });
 
-  afterEach(async () => {
-    await app.close();
+  // TEST 5: Reject a common password
+  it('should reject a common password during registration', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email: `weak-password-${Date.now()}@example.com`,
+        password: 'Password123!',
+      })
+      .expect(400);
   });
 });

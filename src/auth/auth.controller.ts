@@ -4,6 +4,7 @@ import { RegisterDto } from './dto/register.dto/register.dto.js';
 import { LoginDto } from './dto/login.dto/login.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto/reset-password.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto/forgot-password.dto.js';
+import { VerifyEmailDto } from './dto/verify-email.dto/verify-email.dto.js';
 import type { AuthRequest } from './types/auth-request/auth-request.interface.js';
 import { JwtGuard } from './guards/jwt/jwt.guard.js';
 import { Roles } from './decorators/roles/roles.decorator.js';
@@ -34,9 +35,27 @@ export class AuthController {
 
   @ApiOperation({
     summary: 'Register an account',
-    description: 'Creates a user account and returns its public ID and email.',
+    description:
+      'Creates an unverified account and emails a verification code. Submit the code to POST /auth/verify-email to complete registration.',
   })
-  @ApiCreatedResponse({ description: 'The account was created successfully.' })
+  @ApiCreatedResponse({
+    description:
+      'The account was created and a verification code was sent to the email address.',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number', example: 1 },
+        fullName: { type: 'string', example: 'Jordan Smith' },
+        phoneNumber: { type: 'string', example: '+14155552671' },
+        email: { type: 'string', example: 'user@example.com' },
+        message: {
+          type: 'string',
+          example:
+            'A verification code has been sent to your email. Enter the OTP to verify your email and complete registration.',
+        },
+      },
+    },
+  })
   @ApiConflictResponse({
     description: 'An account already exists for this email address.',
   })
@@ -46,6 +65,20 @@ export class AuthController {
   @Post('register')
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
+  }
+
+  @ApiOperation({
+    summary: 'Verify an email address',
+    description:
+      'Verifies the email address using the one-time code sent during registration.',
+  })
+  @ApiOkResponse({ description: 'The email address was verified.' })
+  @ApiBadRequestResponse({
+    description: 'The verification code is invalid or expired.',
+  })
+  @Post('verify-email')
+  async verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.authService.verifyEmail(dto);
   }
 
   @ApiOperation({
@@ -66,6 +99,9 @@ export class AuthController {
   })
   @ApiUnauthorizedResponse({
     description: 'The email or password is incorrect.',
+  })
+  @ApiForbiddenResponse({
+    description: 'The email address has not been verified.',
   })
   @Post('login')
   async login(@Body() dto: LoginDto) {
